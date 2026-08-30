@@ -60,6 +60,7 @@ EXPECTED_KNOWHOW = {
         "asset-review-checklist.md",
         "character-and-look.md",
         "continuity-delta.md",
+        "continuity-lock.md",
         "identity-vs-variant.md",
         "location-and-view.md",
         "occurrence-extraction.md",
@@ -101,6 +102,7 @@ EXPECTED_KNOWHOW = {
         "production-prompt-grammar.md",
         "review-and-fixtures.md",
         "stage-contract.md",
+        "target-model-profile.md",
     },
     "short-drama-review": {
         "anti-template-repair.md",
@@ -541,6 +543,88 @@ class CreatorFirstGoldenTests(unittest.TestCase):
                 "《人物参考》（控制：身份；不得控制：动作）",
                 "完整 REF 语法",
             ),
+            "motion drops a locked surface": (
+                "视频提示词.md",
+                "> A twenty-two-year-old East Asian man with a lean long face, high brow "
+                "ridge, deep-set eyes and short cropped black hair wears buttoned "
+                "olive-green stand-collar service dress",
+                "> A twenty-two-year-old East Asian man with a lean long face, high brow "
+                "ridge, deep-set eyes and short cropped black hair wears a buttoned navy "
+                "mandarin-collar tunic",
+                "LOCK-JIANGCHEN-DRESS: MOTION-EP001-003 可复制提示词缺少锁面",
+            ),
+            "keyframe drops a locked surface": (
+                "分镜.md",
+                "in buttoned olive-green stand-collar service dress",
+                "in a buttoned navy mandarin-collar tunic",
+                "LOCK-JIANGCHEN-DRESS: SHOT-EP001-003 冻结关键帧提示词缺少锁面",
+            ),
+            "image plate drops a locked surface": (
+                "图片提示词.md",
+                "Olive-green stand-collar service dress",
+                "Olive-green service dress",
+                "LOCK-JIANGCHEN-DRESS: IMG-JIANGCHEN-SHEET 可复制提示词缺少锁面",
+            ),
+            "a locked surface only inside a negative prompt": (
+                "分镜.md",
+                "in buttoned olive-green stand-collar service dress",
+                "in a buttoned navy mandarin-collar tunic, no olive-green stand-collar service dress",
+                "LOCK-JIANGCHEN-DRESS: SHOT-EP001-003 冻结关键帧提示词缺少锁面",
+            ),
+            "a locked surface glued to a prefix": (
+                "分镜.md",
+                "in buttoned olive-green stand-collar service dress",
+                "in a fake-olive-green stand-collar service dress",
+                "LOCK-JIANGCHEN-DRESS: SHOT-EP001-003 冻结关键帧提示词缺少锁面",
+            ),
+            "a locked surface glued to a suffix": (
+                "分镜.md",
+                "olive-green stand-collar service dress, lean long face",
+                "olive-green stand-collar service dressing-gown, lean long face",
+                "LOCK-JIANGCHEN-DRESS: SHOT-EP001-003 冻结关键帧提示词缺少锁面",
+            ),
+            "a star-bulleted continuity lock is not silently dropped": (
+                "视觉设定.md",
+                "- 连续性锁：LOCK-JIANGCHEN-DRESS《江晨橄榄绿立领常服》（镜头：SHOT-EP001-002、SHOT-EP001-003、SHOT-EP001-007；图片提示词项：IMG-JIANGCHEN-SHEET）· 锁面：olive-green stand-collar service dress",
+                "* 连续性锁：把常服固定住",
+                "连续性锁必须使用完整语法",
+            ),
+            "malformed continuity lock names the offending line": (
+                "视觉设定.md",
+                "- 连续性锁：LOCK-JIANGCHEN-DRESS《江晨橄榄绿立领常服》（镜头：SHOT-EP001-002、SHOT-EP001-003、SHOT-EP001-007；图片提示词项：IMG-JIANGCHEN-SHEET）· 锁面：olive-green stand-collar service dress",
+                "- 连续性锁：把常服的立领固定住，别再变了",
+                "连续性锁必须使用完整语法: - 连续性锁：把常服的立领固定住，别再变了",
+            ),
+            "continuity lock without a surface": (
+                "视觉设定.md",
+                "）· 锁面：olive-green stand-collar service dress",
+                "）· 锁面：",
+                "连续性锁必须使用完整语法",
+            ),
+            "continuity lock naming an unknown shot": (
+                "视觉设定.md",
+                "（镜头：SHOT-EP001-002、SHOT-EP001-003、SHOT-EP001-007；",
+                "（镜头：SHOT-EP001-099；",
+                "LOCK-JIANGCHEN-DRESS: 连续性锁指向不存在的镜头: SHOT-EP001-099",
+            ),
+            "continuity lock naming an unknown image entry": (
+                "视觉设定.md",
+                "图片提示词项：IMG-JIANGCHEN-SHEET",
+                "图片提示词项：IMG-NOT-DEFINED",
+                "连续性锁指向不存在的 IMG 条目: IMG-NOT-DEFINED",
+            ),
+            "duplicate continuity lock id": (
+                "视觉设定.md",
+                "- 连续性锁：LOCK-JIANGCHEN-DRESS《江晨橄榄绿立领常服》（镜头：SHOT-EP001-002、SHOT-EP001-003、SHOT-EP001-007；图片提示词项：IMG-JIANGCHEN-SHEET）· 锁面：olive-green stand-collar service dress",
+                "- 连续性锁：LOCK-JIANGCHEN-DRESS《江晨橄榄绿立领常服》（镜头：SHOT-EP001-002、SHOT-EP001-003、SHOT-EP001-007；图片提示词项：IMG-JIANGCHEN-SHEET）· 锁面：olive-green stand-collar service dress\n- 连续性锁：LOCK-JIANGCHEN-DRESS《江晨橄榄绿立领常服》（镜头：SHOT-EP001-002、SHOT-EP001-003、SHOT-EP001-007；图片提示词项：IMG-JIANGCHEN-SHEET）· 锁面：olive-green stand-collar service dress",
+                "LOCK-JIANGCHEN-DRESS: 连续性锁 ID 重复",
+            ),
+            "continuity lock mixing 全集 with named shots": (
+                "视觉设定.md",
+                "（镜头：SHOT-EP001-002、SHOT-EP001-003、SHOT-EP001-007；",
+                "（镜头：全集、SHOT-EP001-002；",
+                "不能把全集与具体镜头混写",
+            ),
         }
         for label, (name, old, new, expected) in mutations.items():
             with self.subTest(case=label), tempfile.TemporaryDirectory() as directory:
@@ -609,6 +693,163 @@ class CreatorFirstGoldenTests(unittest.TestCase):
                 errors = creator_markdown_check.validate_episode(episode, project)
                 self.assertTrue(any(expected in error for error in errors), errors)
 
+    def test_a_lock_surface_counts_only_when_the_prompt_asserts_it(self) -> None:
+        """The surface has to name what is in the picture.
+
+        Plain containment answers "do these bytes occur", which both an affix and
+        a negative prompt defeat while looking like a pass. Chinese has no word
+        boundaries, so the boundary rule applies to ASCII words only -- otherwise
+        a Chinese surface could never be satisfied at all.
+        """
+        carries = creator_markdown_check._carries_surface
+        english = "pale blue chunky knit wool sweater"
+        chinese = "浅蓝色粗棒针毛线"
+        for prompt, surface, expected in (
+            (f"a mother knitting a {english} on bamboo needles", english, True),
+            (f"the {english}, half finished.", english, True),
+            (f"wearing no jewelry and a {english}", english, True),
+            (f"..., no text, no logo. A {english} rests on the sofa", english, True),
+            # one physical line break inside the rendered paragraph
+            ("A pale blue chunky knit wool\nsweater, half finished", english, True),
+            (f"a warm red cardigan, no {english}, no text", english, False),
+            (f"without a {english}", english, False),
+            ("a pristine unchipped white enamel mug", "chipped white enamel mug", False),
+            ("the chipped white enamel mug", "chipped white enamel mug", True),
+            (
+                "a fake-olive-green stand-collar service dress",
+                "olive-green stand-collar service dress",
+                False,
+            ),
+            (
+                "olive-green stand-collar service dressing-gown",
+                "olive-green stand-collar service dress",
+                False,
+            ),
+            (f"妈妈织着{chinese}，孩子在旁边看书", chinese, True),
+            (f"她穿着无袖的{chinese}背心", chinese, True),
+            (f"画面里是暗红色开衫，不要{chinese}", chinese, False),
+            (f"镜头里没有{chinese}", chinese, False),
+        ):
+            with self.subTest(surface=surface, prompt=prompt[:40]):
+                self.assertEqual(carries(prompt, surface), expected)
+
+    def test_a_lock_written_with_any_list_marker_still_enforces(self) -> None:
+        """A lock must never become a no-op because of how its bullet is typed.
+
+        Indenting the line under 识别锚点, using a full-width space, or writing
+        `*` instead of `-` all render identically in Markdown; if any of them
+        stopped the lock from being enforced, the drift it exists to catch would
+        come back silently.
+        """
+        declaration = "- 连续性锁：LOCK-JIANGCHEN-DRESS《江晨橄榄绿立领常服》（镜头：SHOT-EP001-002、SHOT-EP001-003、SHOT-EP001-007；图片提示词项：IMG-JIANGCHEN-SHEET）· 锁面：olive-green stand-collar service dress"
+        for label, written in {
+            "indented": "  " + declaration,
+            "full-width space": declaration.replace("- 连续性锁", "-\u3000连续性锁", 1),
+            "star marker": declaration.replace("- ", "* ", 1),
+            "plus marker": declaration.replace("- ", "+ ", 1),
+        }.items():
+            with self.subTest(marker=label), tempfile.TemporaryDirectory() as directory:
+                project = Path(directory)
+                episode = project / "剧集/EP001"
+                shutil.copytree(EPISODE, episode)
+                visual = episode / "视觉设定.md"
+                document = visual.read_text(encoding="utf-8")
+                self.assertIn(declaration, document)
+                visual.write_text(
+                    document.replace(declaration, written, 1), encoding="utf-8"
+                )
+                # Written this way it must still pass on the correct episode...
+                self.assertEqual(
+                    creator_markdown_check.validate_episode(episode, project), []
+                )
+                # ...and still catch the drift.
+                storyboard = episode / "分镜.md"
+                storyboard.write_text(
+                    storyboard.read_text(encoding="utf-8").replace(
+                        "in buttoned olive-green stand-collar service dress",
+                        "in a buttoned navy mandarin-collar tunic",
+                        1,
+                    ),
+                    encoding="utf-8",
+                )
+                self.assertIn(
+                    "LOCK-JIANGCHEN-DRESS: SHOT-EP001-003 冻结关键帧提示词缺少锁面",
+                    creator_markdown_check.validate_episode(episode, project),
+                )
+
+    def test_a_locked_surface_survives_a_hard_wrapped_prompt(self) -> None:
+        """The copyable prompt renders as one paragraph; its source line breaks
+        are not part of the text the creator wrote."""
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            episode = project / "剧集/EP001"
+            shutil.copytree(EPISODE, episode)
+            images = episode / "图片提示词.md"
+            document = images.read_text(encoding="utf-8")
+            self.assertIn("Olive-green stand-collar service dress buttoned", document)
+            images.write_text(
+                document.replace(
+                    "Olive-green stand-collar service dress buttoned",
+                    "Olive-green stand-collar\n> service dress buttoned",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                creator_markdown_check.validate_episode(episode, project), []
+            )
+
+    def test_continuity_lock_scoped_to_the_whole_episode_covers_every_shot(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            episode = project / "剧集/EP001"
+            shutil.copytree(EPISODE, episode)
+            visual = episode / "视觉设定.md"
+            visual.write_text(
+                visual.read_text(encoding="utf-8")
+                + "\n- 连续性锁：LOCK-ABSENT《不存在的锁面》（镜头：全集）"
+                "· 锁面：a surface no prompt in this episode contains\n",
+                encoding="utf-8",
+            )
+            errors = creator_markdown_check.validate_episode(episode, project)
+            shots = heading_ids(text("分镜.md"), "SHOT-")
+            self.assertEqual(
+                sorted(
+                    error
+                    for error in errors
+                    if "冻结关键帧提示词缺少锁面" in error
+                ),
+                sorted(
+                    f"LOCK-ABSENT: {shot_id} 冻结关键帧提示词缺少锁面"
+                    for shot_id in shots
+                ),
+            )
+            self.assertEqual(
+                len([error for error in errors if "可复制提示词缺少锁面" in error]),
+                len(shots),
+            )
+
+    def test_continuity_locks_are_optional(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            episode = project / "剧集/EP001"
+            shutil.copytree(EPISODE, episode)
+            visual = episode / "视觉设定.md"
+            visual.write_text(
+                "\n".join(
+                    line
+                    for line in visual.read_text(encoding="utf-8").splitlines()
+                    if "连续性锁" not in line
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                creator_markdown_check.validate_episode(episode, project), []
+            )
+
     def test_frozen_keyframes_are_copyable_markdown_blocks(self) -> None:
         storyboard = text("分镜.md")
         for shot_id in heading_ids(storyboard, "SHOT-"):
@@ -664,18 +905,18 @@ class CreatorFirstGoldenTests(unittest.TestCase):
             "short-drama-write": {*(f"SCR-{number:02d}" for number in range(1, 18))},
             "short-drama-assets": {
                 *(f"AST-{number:02d}" for number in range(1, 13)),
-                *(f"CON-{number:02d}" for number in range(1, 7)),
+                *(f"CON-{number:02d}" for number in range(1, 8)),
             },
             "short-drama-image-prompts": {
-                *(f"IMG-{number:02d}" for number in range(1, 13))
+                *(f"IMG-{number:02d}" for number in range(1, 14))
             },
             "short-drama-storyboard": {
                 *(f"SHT-{number:02d}" for number in range(1, 22)),
-                *(f"CON-{number:02d}" for number in range(1, 7)),
+                *(f"CON-{number:02d}" for number in range(1, 8)),
             },
             "short-drama-video-prompts": {
-                *(f"VID-{number:02d}" for number in range(1, 23)),
-                *(f"CON-{number:02d}" for number in range(1, 7)),
+                *(f"VID-{number:02d}" for number in range(1, 24)),
+                *(f"CON-{number:02d}" for number in range(1, 8)),
             },
             "short-drama-review": {*(f"REV-{number:02d}" for number in range(1, 12))},
         }
